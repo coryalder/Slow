@@ -1,5 +1,5 @@
 //
-//  Limit.swift
+//  Slow.swift
 //  SwiM
 //
 //  Created by Cory Alder on 2016-04-19.
@@ -24,35 +24,29 @@ public class Slow {
     }
     
     
-    public func run(closure: (Void)->(Void)) {
-        
-        if let previous = previous {
-            previous(true) // kill previous
-        }
-        
-        previous = self.dynamicType.cancellable_perform(delay: self.interval, queue: self.queue, closure: closure)
+    public func run(closure: dispatch_block_t) {
+        previous?(true) // kill previous
+        previous = self.dynamicType.cancellable_perform(self.interval, queue: self.queue, closure: closure)
     }
     
-    public static func cancellable_perform(delay: NSTimeInterval, queue: dispatch_queue_t = dispatch_get_main_queue(), closure:(Void)->(Void)) -> DelayedBlock {
-        
-        var toExecute: ((Void)->(Void))? = closure
+    public static func cancellable_perform(delay: NSTimeInterval, queue: dispatch_queue_t = dispatch_get_main_queue(), closure:dispatch_block_t) -> DelayedBlock {
+        var toExecute: dispatch_block_t? = closure
         
         let cancellable: DelayedBlock = {
             cancel in
             
             if cancel == false, let toExecute = toExecute  {
-                dispatch_async(dispatch_get_main_queue(), toExecute);
+                dispatch_async(queue, toExecute);
             }
             
             toExecute = nil
         }
         
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(delay * Double(NSEC_PER_SEC))), dispatch_get_main_queue()) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(delay * Double(NSEC_PER_SEC))), queue) {
             cancellable(false)
         }
         
         return cancellable
     }
-    
 }
 
