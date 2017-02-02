@@ -1,5 +1,5 @@
 //
-//  Limit.swift
+//  Slow.swift
 //  SwiM
 //
 //  Created by Cory Alder on 2016-04-19.
@@ -23,13 +23,9 @@ public class Slow {
         self.queue = queue
     }
     
-    
     public func run(closure: (Void)->(Void)) {
-        
-        if let previous = previous {
-            previous(true) // kill previous
-        }
-        
+    
+        previous?(true)
         previous = Slow.cancellable_perform(delay: self.interval, queue: self.queue, closure: closure)
     }
     
@@ -41,6 +37,7 @@ public class Slow {
             cancel in
             
             if cancel == false, let toExecute = toExecute  {
+                queue.async(execute: toExecute)
                 DispatchQueue.main.async(execute: toExecute)
             }
             
@@ -53,6 +50,5 @@ public class Slow {
         
         return cancellable
     }
-    
 }
 
