@@ -14,11 +14,11 @@ public class Slow {
     
     public typealias DelayedBlock = (Bool)->(Void)
     
-    let queue: dispatch_queue_t // queue ops will run on
-    let interval: NSTimeInterval // delay on ops
+    let queue: DispatchQueue // queue ops will run on
+    let interval: TimeInterval // delay on ops
     var previous: DelayedBlock? // the previously enqueued op
     
-    public init(interval: NSTimeInterval, queue: dispatch_queue_t = dispatch_get_main_queue()) {
+    public init(interval: TimeInterval, queue: DispatchQueue = DispatchQueue.main) {
         self.interval = interval
         self.queue = queue
     }
@@ -30,10 +30,10 @@ public class Slow {
             previous(true) // kill previous
         }
         
-        previous = self.dynamicType.cancellable_perform(delay: self.interval, queue: self.queue, closure: closure)
+        previous = Slow.cancellable_perform(delay: self.interval, queue: self.queue, closure: closure)
     }
     
-    public static func cancellable_perform(delay: NSTimeInterval, queue: dispatch_queue_t = dispatch_get_main_queue(), closure:(Void)->(Void)) -> DelayedBlock {
+    public static func cancellable_perform(delay: TimeInterval, queue: DispatchQueue = DispatchQueue.main, closure:(Void)->(Void)) -> DelayedBlock {
         
         var toExecute: ((Void)->(Void))? = closure
         
@@ -41,13 +41,13 @@ public class Slow {
             cancel in
             
             if cancel == false, let toExecute = toExecute  {
-                dispatch_async(dispatch_get_main_queue(), toExecute);
+                DispatchQueue.main.async(execute: toExecute)
             }
             
             toExecute = nil
         }
         
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(delay * Double(NSEC_PER_SEC))), dispatch_get_main_queue()) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             cancellable(false)
         }
         
